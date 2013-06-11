@@ -37,3 +37,5 @@ phpunit.xml
 /test/bootstrap.php
 # Jenkins
 /build/
+themes/cleanstrap/
+themes/pmahomme/img_backup/
