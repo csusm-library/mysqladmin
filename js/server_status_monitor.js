@@ -1189,6 +1189,19 @@ AJAX.registerOnload('server_status_monitor.js', function() {
             settings.axes.yaxis.tickOptions = {
                 formatter: $.jqplot.byteFormatter(1) // KiB
             };
+        } else if (settings.title === PMA_messages.strQuestions
+            || settings.title === PMA_messages.strConnections
+        ) {
+            settings.axes.yaxis.tickOptions = {
+                formatter: function(format, val) {
+                    if (Math.abs(val) >= 1000000)
+                        return $.jqplot.sprintf("%.3g M", val/1000000);
+                    else if (Math.abs(val) >= 1000)
+                        return $.jqplot.sprintf("%.3g k", val/1000);
+                    else
+                        return $.jqplot.sprintf("%d", val);
+                }
+            };
         }
 
         settings.series = chartObj.series;
@@ -1276,7 +1289,6 @@ AJAX.registerOnload('server_status_monitor.js', function() {
             );
         }
         $('#gridchart' + runtime.chartAI)
-            .css('overflow', 'hidden')
             .parent()
             .append($legend);
 
@@ -1410,9 +1422,9 @@ AJAX.registerOnload('server_status_monitor.js', function() {
 
     function PMA_getLogAnalyseDialog(min, max) {
         $('#logAnalyseDialog input[name="dateStart"]')
-            .val(formatDate(min, 'yyyy-MM-dd HH:mm:ss'));
+            .val(PMA_formatDateTime(min, true));
         $('#logAnalyseDialog input[name="dateEnd"]')
-            .val(formatDate(max, 'yyyy-MM-dd HH:mm:ss'));
+            .val(PMA_formatDateTime(max, true));
 
         var dlgBtns = { };
 
@@ -2047,7 +2059,8 @@ AJAX.registerOnload('server_status_monitor.js', function() {
         var query = rowData.argument || rowData.sql_text;
 
         if (codemirror_editor) {
-            query = PMA_SQLPrettyPrint(query);
+            //TODO: somehow PMA_SQLPrettyPrint messes up the query, needs be fixed
+            //query = PMA_SQLPrettyPrint(query);
             codemirror_editor.setValue(query);
             // Codemirror is bugged, it doesn't refresh properly sometimes.
             // Following lines seem to fix that
@@ -2104,7 +2117,10 @@ AJAX.registerOnload('server_status_monitor.js', function() {
         }, function(data) {
             if (data.success == true) {
                 data = data.message;
-            } else {
+            }
+            if (data.error) {
+                if(data.error.indexOf('1146') != -1 || data.error.indexOf('1046') != -1)
+                    data.error = PMA_messages['strServerLogError'];
                 $('#queryAnalyzerDialog div.placeHolder').html('<div class="error">' + data.error + '</div>');
                 return;
             }

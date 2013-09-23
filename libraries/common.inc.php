@@ -102,6 +102,13 @@ require './libraries/core.lib.php';
 require './libraries/sanitizing.lib.php';
 
 /**
+ * Warning about mbstring.
+ */
+if (! function_exists('mb_detect_encoding')) {
+    PMA_warnMissingExtension('mbstring', $fatal = true);
+}
+
+/**
  * the PMA_Theme class
  */
 require './libraries/Theme.class.php';
@@ -742,8 +749,10 @@ if (@file_exists($_SESSION['PMA_Theme']->getLayoutFile())) {
 }
 
 if (! defined('PMA_MINIMUM_COMMON')) {
-    // get a dummy object to ensure that the class is instanciated
-    PMA_Response::getInstance();
+    if (! defined('PMA_BYPASS_GET_INSTANCE')) {
+        // get a dummy object to ensure that the class is instanciated
+        PMA_Response::getInstance();
+    }
 
     /**
      * Character set conversion.
@@ -1048,7 +1057,9 @@ if (! defined('PMA_MINIMUM_COMMON')) {
      * Inclusion of profiling scripts is needed on various
      * pages like sql, tbl_sql, db_sql, tbl_select
      */
-    $response = PMA_Response::getInstance();
+    if (! defined('PMA_BYPASS_GET_INSTANCE')) {
+        $response = PMA_Response::getInstance();
+    }
     if (isset($_SESSION['profiling'])) {
         $header   = $response->getHeader();
         $scripts  = $header->getScripts();
@@ -1065,7 +1076,7 @@ if (! defined('PMA_MINIMUM_COMMON')) {
      * There is no point in even attempting to process
      * an ajax request if there is a token mismatch
      */
-    if ($response->isAjax() && $token_mismatch) {
+    if (isset($response) && $response->isAjax() && $token_mismatch) {
         $response->isSuccess(false);
         $response->addJSON(
             'message',

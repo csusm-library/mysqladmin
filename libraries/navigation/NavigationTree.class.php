@@ -576,7 +576,11 @@ class PMA_NavigationTree
                     $groups[$key]->separator = $node->separator;
                     $groups[$key]->separator_depth = $node->separator_depth - 1;
                     $groups[$key]->icon = '';
-                    if ($GLOBALS['cfg']['NavigationBarIconic']) {
+                    if (in_array(
+                        $GLOBALS['cfg']['TableNavigationLinksMode'],
+                        array('icons', 'both')
+                        )
+                    ) {
                         $groups[$key]->icon = PMA_Util::getImage(
                             'b_group.png'
                         );
@@ -635,7 +639,7 @@ class PMA_NavigationTree
         $retval  = $this->_fastFilterHtml($this->_tree);
         $retval .= $this->_getPageSelector($this->_tree);
         $this->groupTree();
-        $retval .= "<div><ul>";
+        $retval .= "<div id='pma_navigation_tree_content'><ul>";
         $children = $this->_tree->children;
         usort($children, array('PMA_NavigationTree', 'sortNode'));
         $this->_setVisibility();
@@ -877,6 +881,7 @@ class PMA_NavigationTree
                 $retval .= "</div>";
             }
 
+            $dblinkclass = ' class="dbLink"';
             $linkClass = '';
             $haveAjax = array(
                 'functions',
@@ -899,7 +904,11 @@ class PMA_NavigationTree
             if ($node->type == Node::CONTAINER) {
                 $retval .= "<i>";
             }
-            if ($GLOBALS['cfg']['NavigationBarIconic']) {
+            if (in_array(
+                $GLOBALS['cfg']['TableNavigationLinksMode'],
+                array('icons', 'both')
+                )
+            ) {
                 $retval .= "<div class='block'>";
                 if (isset($node->links['icon'])) {
                     $args = array();
@@ -924,17 +933,7 @@ class PMA_NavigationTree
                     $retval .= htmlspecialchars($node->name);
                     $retval .= "</a>";
                 } else {
-                    if ($GLOBALS['cfg']['ShowTooltip']) {
-                        $title = $node->getComment();
-                        if ($title) {
-                            $title = ' title="'
-                                . htmlentities($title, ENT_QUOTES, 'UTF-8') 
-                                . '"';
-                        }
-                    } else {
-                        $title = '';
-                    }
-                    $retval .= "<a$linkClass$title href='$link'>";
+                    $retval .= "<a$dblinkclass$linkClass href='$link'>";
                     $retval .= htmlspecialchars($node->real_name);
                     $retval .= "</a>";
                 }
